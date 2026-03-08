@@ -37,70 +37,164 @@
   var users = [];
   
   app.use(express.json());
-  app.post("/signup", (req, res) => {
-    var user = req.body;
-    let userAlreadyExists = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email) {
-          userAlreadyExists = true;
+
+
+  // app.post("/signup", (req, res) => {
+  //   var user = req.body;
+  //   let userAlreadyExists = false;
+  //   for (var i = 0; i<users.length; i++) {
+  //     if (users[i].email === user.email) {
+  //         userAlreadyExists = true;
+  //         break;
+  //     }
+  //   }
+  //   if (userAlreadyExists) {
+  //     res.sendStatus(400);
+  //   } else {
+  //     users.push(user);
+  //     res.status(201).send("Signup successful");
+  //   }
+  // });
+  
+  // app.post("/login", (req, res) => {
+  //   var user = req.body;
+  //   let userFound = null;
+  //   for (var i = 0; i<users.length; i++) {
+  //     if (users[i].email === user.email && users[i].password === user.password) {
+  //         userFound = users[i];
+  //         break;
+  //     }
+  //   }
+  
+  //   if (userFound) {
+  //     res.json({
+  //         firstName: userFound.firstName,
+  //         lastName: userFound.lastName,
+  //         email: userFound.email
+  //     });
+  //   } else {
+  //     res.sendStatus(401);
+  //   }
+  // });
+  
+  // app.get("/data", (req, res) => {
+  //   var email = req.headers.email;
+  //   var password = req.headers.password;
+  //   let userFound = false;
+  //   for (var i = 0; i<users.length; i++) {
+  //     if (users[i].email === email && users[i].password === password) {
+  //         userFound = true;
+  //         break;
+  //     }
+  //   }
+  
+  //   if (userFound) {
+  //     let usersToReturn = [];
+  //     for (let i = 0; i<users.length; i++) {
+  //         usersToReturn.push({
+  //             firstName: users[i].firstName,
+  //             lastName: users[i].lastName,
+  //             email: users[i].email
+  //         });
+  //     }
+  //     res.json({
+  //         users
+  //     });
+  //   } else {
+  //     res.sendStatus(401);
+  //   }
+  // });
+
+  function middleware(req,res,next){
+    let email = req.headers.email;
+    let password = req.headers.password;
+
+    let userFound = false;
+    for(let i=0 ; i < users.length ; i++){
+        if(users[i].email === email && users[i].password === password){
+          userFound=true;
           break;
+        }
+    }
+
+    if(userFound){
+      next();
+    }
+    else{
+      res.sendStatus(401);
+    }
+  }
+
+
+  app.post("/signup",(req,res)=>{
+    let alreadySignedup = false;
+    let userInfo = req.body;
+    for(let i=0 ; i < users.length ; i++){
+      if(users[i].email === userInfo.email){
+        alreadySignedup = true;
+        break;
       }
     }
-    if (userAlreadyExists) {
+    if(alreadySignedup){
       res.sendStatus(400);
-    } else {
-      users.push(user);
+    }
+    else{
+      users.push(userInfo);
       res.status(201).send("Signup successful");
     }
   });
-  
-  app.post("/login", (req, res) => {
-    var user = req.body;
-    let userFound = null;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === user.email && users[i].password === user.password) {
-          userFound = users[i];
-          break;
+
+  app.post("/login",(req,res)=>{
+    let user = null;
+    let userInfo = req.body;
+    for(let i=0 ; i < users.length ; i++){
+      if(users[i].email === userInfo.email && users[i].password === userInfo.password){
+        user = users[i];
+        break;
       }
     }
-  
-    if (userFound) {
+    if(user){
       res.json({
-          firstName: userFound.firstName,
-          lastName: userFound.lastName,
-          email: userFound.email
+        firstName : user.firstName,
+        lastName : user.lastName,
+        email : user.email
       });
-    } else {
+    }
+    else{
       res.sendStatus(401);
     }
   });
   
-  app.get("/data", (req, res) => {
-    var email = req.headers.email;
-    var password = req.headers.password;
-    let userFound = false;
-    for (var i = 0; i<users.length; i++) {
-      if (users[i].email === email && users[i].password === password) {
-          userFound = true;
-          break;
-      }
-    }
-  
-    if (userFound) {
-      let usersToReturn = [];
-      for (let i = 0; i<users.length; i++) {
-          usersToReturn.push({
-              firstName: users[i].firstName,
-              lastName: users[i].lastName,
-              email: users[i].email
+
+  app.get("/data",middleware,(req,res)=>{
+      // let email = req.header.email;
+      // let password = req.header.password;
+
+      // let userFound = false;
+      // for(let i=0 ; i < users.length ; i++){
+      //     if(users[i].email === email && users[i].password === password){
+      //       userFound=true;
+      //       break;
+      //     }
+      // }
+      // if(userFound){
+          let userArr = [];
+          for(let i=0 ; i < users.length ; i++){
+              userArr.push({
+                firstName: users[i].firstName,
+                lastName: users[i].lastName,
+                email: users[i].email
+              });
+          }
+          res.json({
+            users : userArr
           });
-      }
-      res.json({
-          users
-      });
-    } else {
-      res.sendStatus(401);
-    }
+      // }
   });
-  
+
+
+  app.use((req,res)=>{
+    res.sendStatus(404);
+  });
+
   module.exports = app;
